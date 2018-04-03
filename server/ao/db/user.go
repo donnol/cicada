@@ -4,6 +4,14 @@ import (
 	"database/sql"
 )
 
+// User 用户
+type User struct {
+	ID       int
+	Phone    string
+	Password string
+	Name     string // 注册时
+}
+
 // ExistPhone 是否存在手机号
 func ExistPhone(phone string) (exist bool, err error) {
 	var userID int

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"cicada/server/ao"
+	"cicada/server/ao/db"
 )
 
 func main() {
@@ -91,6 +92,10 @@ func newMux() *http.ServeMux {
 		},
 	}, "JSON"))
 
+	mux.Handle("/ExpenseList", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, err error) {
+		return db.ExpenseList()
+	}, http.MethodGet, nil, "JSON"))
+
 	return mux
 }
 
@@ -148,6 +153,13 @@ func handlerWrapper(
 			w.Write([]byte(err.Error()))
 			return
 		}
+
+		// 设置 header
+		// 文本格式
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		// 跨域
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 		// 返回
 		switch responseFormat {

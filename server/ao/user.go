@@ -8,14 +8,6 @@ import (
 	"cicada/server/ao/db"
 )
 
-// User 用户
-type User struct {
-	ID       int
-	Phone    string
-	Password string
-	Name     string // 注册时
-}
-
 // RegisterCode 获取注册码
 func RegisterCode(phone string) (code string, err error) {
 	// 是否已注册
@@ -44,7 +36,7 @@ func RegisterCode(phone string) (code string, err error) {
 }
 
 // Register 注册 TODO
-func Register(phone, code, password string) (u User, err error) {
+func Register(phone, code, password string) (u db.User, err error) {
 	// 校验 phone, code
 
 	// 生成随机名称
@@ -60,12 +52,12 @@ func LoginCode(phone string) (code string, err error) {
 }
 
 // LoginWithCode 动态码登陆
-func LoginWithCode(phone, code string) (u User, err error) {
+func LoginWithCode(phone, code string) (u db.User, err error) {
 	return
 }
 
 // LoginWithPassword 密码登陆
-func LoginWithPassword(phone, password string) (u User, err error) {
+func LoginWithPassword(phone, password string) (u db.User, err error) {
 	return
 }
 
@@ -75,6 +67,6 @@ func Logout() (err error) {
 }
 
 // ModifyUser 修改用户信息
-func ModifyUser(id int, u User) (err error) {
+func ModifyUser(id int, u db.User) (err error) {
 	return
 }
