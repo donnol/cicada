@@ -12,7 +12,7 @@ type Expense struct {
 
 // ExpenseList 支出列表
 func ExpenseList() (expenses []Expense, err error) {
-	err = db.Select(&expenses, `SELECT * FROM t_expense
+	err = _db.Select(&expenses, `SELECT * FROM t_expense
 		`,
 	)
 	if err != nil {

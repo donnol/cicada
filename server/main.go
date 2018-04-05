@@ -4,22 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
-	"math/rand"
 	"net/http"
-	"os"
 	"reflect"
 	"strconv"
-	"time"
 
 	"cicada/server/ao"
 	"cicada/server/ao/db"
 )
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	log.SetOutput(os.Stdout)
-	rand.Seed(time.Now().Unix())
-
 	addr := ":8520"
 
 	mux := newMux()
