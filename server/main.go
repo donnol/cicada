@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -10,7 +11,8 @@ import (
 	"regexp"
 	"strconv"
 
-	"cicada/server/ao"
+	"cicada/server/model"
+	"cicada/server/util"
 )
 
 func main() {
@@ -110,12 +112,12 @@ func handleParam(values url.Values, paramOptionMap map[string]paramOption, param
 func newMux() *http.ServeMux {
 	mux := http.NewServeMux()
 
-	mux.Handle("/RegisterCode", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, err error) {
+	mux.Handle("/RegisterCode", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
 
 		// 校验权限 TODO
 		// if userID != 0 {
 		// roles := []string{}
-		// if err := ao.CheckRole(userID, roles); err != nil {
+		// if err := model.CheckRole(userID, roles); err != nil {
 		// w.Write([]byte("用户没有该权限"))
 		// return
 		// }
@@ -125,7 +127,7 @@ func newMux() *http.ServeMux {
 		if v, ok := param["Phone"]; ok {
 			phone = v.(string)
 		}
-		code, err := ao.RegisterCode(phone)
+		code, err := model.PhoneRegisterCode(phone)
 		if err != nil {
 			return
 		}
@@ -142,14 +144,55 @@ func newMux() *http.ServeMux {
 		},
 	}, "JSON"))
 
-	mux.Handle("/ExpenseList", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, err error) {
-		ep := ao.ExpenseParam{}
-		err = mapToStruct(param, &ep)
+	mux.Handle("/Register", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
+		v, err = model.NameRegister(param["Name"].(string), param["Password"].(string))
+		return
+	}, http.MethodPost, map[string]paramOption{
+		"Name": paramOption{
+			Must: true,
+		},
+		"Password": paramOption{
+			Must: true,
+		},
+	}, "JSON"))
+
+	mux.Handle("/Login", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
+
+		u, err := model.NameLogin(param["Name"].(string), param["Password"].(string))
 		if err != nil {
 			return
 		}
 
-		return ao.ExpenseList(ep)
+		// 设置登陆态
+		maxAge := 3600 * 24
+		cookie := fmt.Sprintf("jd_session=%d; HttpOnly; max-age=%d", u.ID, maxAge)
+		headers = append(headers, customHeader{
+			"Set-Cookie",
+			cookie,
+		})
+
+		v = u
+
+		return
+	}, http.MethodPost, map[string]paramOption{
+		"Name": paramOption{
+			Must: true,
+		},
+		"Password": paramOption{
+			Must: true,
+		},
+	}, "JSON"))
+
+	mux.Handle("/ExpenseList", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
+		ep := model.ExpenseParam{}
+		ep.Limit = 10
+		err = util.MapToStruct(param, &ep)
+		if err != nil {
+			return
+		}
+
+		v, err = model.ExpenseList(ep)
+		return
 	}, http.MethodGet, map[string]paramOption{
 		"ID": paramOption{
 			Kind:  reflect.Int,
@@ -160,49 +203,9 @@ func newMux() *http.ServeMux {
 	return mux
 }
 
-// 参数转换
-func mapToStruct(param map[string]interface{}, s interface{}) (err error) {
-	sType := reflect.TypeOf(s)
-	if sType.Kind() != reflect.Ptr {
-		err = errors.New("参数s请传入struct指针")
-		return
-	}
-	sType = sType.Elem()
-	if sType.Kind() != reflect.Struct {
-		err = errors.New("参数s请传入struct")
-		return
-	}
-	sValue := reflect.ValueOf(s)
-	for i := 0; i < sType.NumField(); i++ {
-		field := sType.Field(i)
-		fieldKind := field.Type.Kind()
-		if fieldKind == reflect.Struct {
-			innerFieldType := field.Type
-			innerFieldValue := sValue.Elem().Field(i)
-			for j := 0; j < innerFieldType.NumField(); j++ {
-				innerField := innerFieldType.Field(j)
-				innerFieldName := innerField.Name
-				if innerField.Type.Kind() == reflect.Ptr {
-					if v, ok := param[innerFieldName]; ok {
-						vv := reflect.ValueOf(v)
-						innerFieldValue.Field(j).Set(vv)
-					}
-				} else {
-					if v, ok := param[innerFieldName]; ok {
-						vv := reflect.ValueOf(v)
-						innerFieldValue.Field(j).Set(vv)
-					}
-				}
-			}
-		} else {
-			fieldName := field.Name
-			if v, ok := param[fieldName]; ok {
-				vv := reflect.ValueOf(v)
-				sValue.Elem().Field(i).Set(vv)
-			}
-		}
-	}
-	return
+type customHeader struct {
+	Key   string
+	Value string
 }
 
 // 参数校验 -- method, paramOptionMap
@@ -214,6 +217,7 @@ func handlerWrapper(
 		param map[string]interface{},
 	) (
 		interface{},
+		[]customHeader,
 		error,
 	),
 	method string,
@@ -253,7 +257,7 @@ func handlerWrapper(
 		// userID = CookieUser(cookie)
 
 		// 执行方法
-		v, err := f(userID, param)
+		v, headers, err := f(userID, param)
 		if err != nil {
 			w.Write([]byte(err.Error()))
 			return
@@ -265,6 +269,10 @@ func handlerWrapper(
 		// 跨域
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		// custom header
+		for _, header := range headers {
+			w.Header().Set(header.Key, header.Value)
+		}
 
 		// 返回
 		switch responseFormat {
