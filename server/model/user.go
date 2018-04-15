@@ -120,11 +120,6 @@ func verifyPassword(hashedPassword, password string) error {
 
 // NameLogin 账号登陆
 func NameLogin(name, password string) (u User, err error) {
-	// password, err = hashPassword(password)
-	// if err != nil {
-	// 	return
-	// }
-
 	err = _db.Get(&u, `SELECT id, name, password FROM t_user
 		wHERE name = $1
 		`,
@@ -134,7 +129,6 @@ func NameLogin(name, password string) (u User, err error) {
 		err = errors.New("Don't exist user")
 		return
 	}
-	log.Printf("%v\n", u)
 	if err != nil {
 		return
 	}

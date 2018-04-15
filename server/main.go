@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"regexp"
 	"strconv"
+	"time"
 
 	"cicada/server/model"
 	"cicada/server/util"
@@ -114,15 +115,6 @@ func newMux() *http.ServeMux {
 
 	mux.Handle("/RegisterCode", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
 
-		// 校验权限 TODO
-		// if userID != 0 {
-		// roles := []string{}
-		// if err := model.CheckRole(userID, roles); err != nil {
-		// w.Write([]byte("用户没有该权限"))
-		// return
-		// }
-		// }
-
 		var phone string
 		if v, ok := param["Phone"]; ok {
 			phone = v.(string)
@@ -145,8 +137,10 @@ func newMux() *http.ServeMux {
 	}, "JSON"))
 
 	mux.Handle("/Register", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
+
 		v, err = model.NameRegister(param["Name"].(string), param["Password"].(string))
 		return
+
 	}, http.MethodPost, map[string]paramOption{
 		"Name": paramOption{
 			Must: true,
@@ -165,7 +159,16 @@ func newMux() *http.ServeMux {
 
 		// 设置登陆态
 		maxAge := 3600 * 24
-		cookie := fmt.Sprintf("jd_session=%d; HttpOnly; max-age=%d", u.ID, maxAge)
+		jwt := util.NewJSONWebToken("HelloIamJD")
+		jwt.Iss = "server"
+		jwt.Iat = time.Now().Unix()
+		jwt.Exp = time.Now().Add(24 * time.Hour).Unix()
+		jwt.FromUser = u.ID
+		session, err := jwt.Token()
+		if err != nil {
+			return
+		}
+		cookie := fmt.Sprintf("jd_session=%s; HttpOnly; max-age=%d", session, maxAge)
 		headers = append(headers, customHeader{
 			"Set-Cookie",
 			cookie,
@@ -183,7 +186,22 @@ func newMux() *http.ServeMux {
 		},
 	}, "JSON"))
 
+	mux.Handle("/Logout", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
+
+		// 怎么让 cookie 失效呢？ TODO
+		// 1 后端不处理，前端把cookie去掉，不过会有cookie泄露的问题
+		// 2 登出/重置密码后，在后端黑名单里记录cookie，以后每个cookie均检查是否在黑名单，直到该cookie过期
+
+		return
+	}, http.MethodPost, map[string]paramOption{}, "JSON"))
+
 	mux.Handle("/ExpenseList", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
+
+		if userID == 0 {
+			err = errors.New("please login")
+			return
+		}
+
 		ep := model.ExpenseParam{}
 		ep.Limit = 10
 		err = util.MapToStruct(param, &ep)
@@ -193,6 +211,7 @@ func newMux() *http.ServeMux {
 
 		v, err = model.ExpenseList(ep)
 		return
+
 	}, http.MethodGet, map[string]paramOption{
 		"ID": paramOption{
 			Kind:  reflect.Int,
@@ -251,10 +270,28 @@ func handlerWrapper(
 			return
 		}
 
-		// 根据 cookie 获取 userID TODO
+		// 根据 cookie 获取 userID
 		var userID int
-		// cookie, _ := r.Cookie("login_session")
-		// userID = CookieUser(cookie)
+		cookies := r.Cookies()
+		for _, cookie := range cookies {
+			if cookie.Name == "jd_session" {
+				userID, _ = util.CookieUser(cookie.Value)
+				jwt := util.NewJSONWebToken("HelloIamJD")
+				ok, err := jwt.Verify(cookie.Value)
+				if err != nil {
+					w.Write([]byte(err.Error()))
+					return
+				}
+				if ok {
+					// 检查 cookie 是否已过期
+					if jwt.Exp-time.Now().Unix() < 0 {
+						w.Write([]byte("登陆态已过期，请重新登陆"))
+						return
+					}
+					userID = jwt.FromUser
+				}
+			}
+		}
 
 		// 执行方法
 		v, headers, err := f(userID, param)
