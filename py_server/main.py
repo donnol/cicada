@@ -3,15 +3,22 @@ import json
 
 
 class HelloHandler(server.BaseHTTPRequestHandler):
-    # def __init__(self, r, addr, s):
-    #     print(self, r, addr, s)
-    #
     def do_GET(self):
         print("hello")
-        msg = json.dumps(["hello"])
+        msg = json.dumps(["hello, get"])
         self.protocal_version = "HTTP/1.1"
         self.send_response(200)
         self.send_header("Hello", "Header")
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.end_headers()
+        self.wfile.write(msg.encode())
+
+    def do_POST(self):
+        msg = json.dumps(["hello, post"])
+        self.protocal_version = "HTTP/1.1"
+        self.send_response(200)
+        self.send_header("Hello", "Header")
+        self.send_header("Content-Type", "application/json; charset=utf-8")
         self.end_headers()
         self.wfile.write(msg.encode())
 
