@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"time"
 
-	"cicada/server/model"
-	"cicada/server/util"
+	"cicada/server/go_server/model"
+	"cicada/server/go_server/util"
 )
 
 func main() {

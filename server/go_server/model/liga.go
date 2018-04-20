@@ -6,7 +6,8 @@ import (
 	"math/rand"
 	"net/http"
 
-	_ "cicada/server/util"
+	// 工具
+	_ "cicada/server/go_server/util"
 
 	"github.com/PuerkitoBio/goquery"
 )

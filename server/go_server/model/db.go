@@ -4,7 +4,7 @@ import (
 	"log"
 
 	// 工具
-	_ "cicada/server/util"
+	_ "cicada/server/go_server/util"
 
 	"github.com/jmoiron/sqlx"
 	// 数据库引擎
