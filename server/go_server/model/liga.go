@@ -321,12 +321,14 @@ func (s *Schedule) makeSchedule() (err error) {
 			conf := Confrontation{}
 
 			for {
+				log.Printf("剩余球队：%v, 已有对阵：%v\n", leftTeam, s.Result)
 				if len(leftTeam) == 0 {
 					break
 				}
 				homeIndex := rand.Intn(len(leftTeam))
 				conf.Home = leftTeam[homeIndex]
 				if v, ok := confMap[conf.Home]; ok {
+					log.Printf("可抽球队：%v\n", v)
 					if len(v) == 0 {
 						continue
 					}
@@ -343,10 +345,11 @@ func (s *Schedule) makeSchedule() (err error) {
 					if !found {
 						continue
 					}
+					// TODO 剩余两只球队已经对阵过了，应该重新抽一遍
 
 					confMap[conf.Home] = append(v[:guestIndex], v[guestIndex+1:]...) // 删除主队还能抽的客队
-					log.Printf("%d,%d,%v\n", i, j, conf)
-					log.Printf("%v\n", confMap)
+					log.Printf("%d,%d, 抽到的对阵：%v\n", i, j, conf)
+					// log.Printf("球队剩余可抽球队：%v\n", confMap)
 					leftTeam = append(leftTeam[:homeIndex], leftTeam[homeIndex+1:]...) // 删除主队
 					for k, team := range leftTeam {
 						if team == conf.Guest {
