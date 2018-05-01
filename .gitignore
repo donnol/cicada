@@ -1,2 +1,2 @@
-server/vendor/*
-server/server
+server/go_server/vendor/*
+server/go_server/go_server
