@@ -1,2 +1,3 @@
 server/go_server/vendor/*
 server/go_server/go_server
+server/go_server/log/*

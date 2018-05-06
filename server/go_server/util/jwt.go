@@ -74,9 +74,10 @@ func (j *JSONWebToken) Token() (s string, err error) {
 	if err != nil {
 		return
 	}
-	s = string(h.Sum(nil))
+	sum := h.Sum(nil)
 
-	s = str + "." + s
+	sumBase64 := base64.StdEncoding.EncodeToString(sum)
+	s = str + "." + sumBase64
 	return
 }
 
@@ -94,8 +95,9 @@ func (j *JSONWebToken) Verify(token string) (ok bool, err error) {
 	if err != nil {
 		return
 	}
-	s := string(h.Sum(nil))
-	ok = s == tokens[2]
+	sum := h.Sum(nil)
+	sumBase64 := base64.StdEncoding.EncodeToString(sum)
+	ok = sumBase64 == tokens[2]
 
 	// 解析
 	for i := 0; i < 2; i++ {
