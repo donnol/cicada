@@ -197,10 +197,10 @@ func newMux() *http.ServeMux {
 
 	mux.Handle("/ExpenseList", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
 
-		if userID == 0 {
-			err = errors.New("please login")
-			return
-		}
+		// if userID == 0 {
+		// 	err = errors.New("please login")
+		// 	return
+		// }
 
 		ep := model.ExpenseParam{}
 		ep.Limit = 10
@@ -283,11 +283,11 @@ func handlerWrapper(
 					return
 				}
 				if ok {
-					// 检查 cookie 是否已过期
-					if jwt.Exp-time.Now().Unix() < 0 {
-						w.Write([]byte("登陆态已过期，请重新登陆"))
-						return
-					}
+					// 检查 cookie 是否已过期 FIXME
+					// if jwt.Exp-time.Now().Unix() < 0 {
+					// 	w.Write([]byte("登陆态已过期，请重新登陆"))
+					// 	return
+					// }
 					userID = jwt.FromUser
 				}
 			}
