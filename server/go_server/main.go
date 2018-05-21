@@ -219,6 +219,10 @@ func newMux() *http.ServeMux {
 		},
 	}, "JSON"))
 
+	mux.Handle("/Upload", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
+		return
+	}, http.MethodPost, map[string]paramOption{}, "JSON"))
+
 	return mux
 }
 

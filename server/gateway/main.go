@@ -1,19 +1,16 @@
 package main
 
 import (
-	"bytes"
-	"fmt"
 	"io"
 	"log"
 	"net"
 	"os"
-	"strconv"
-	"time"
-
-	"github.com/boltdb/bolt"
 )
 
+// c := make(chan []byte, 100)
+
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.SetOutput(os.Stdout)
 
 	l, err := net.Listen("tcp", ":5550")
@@ -24,32 +21,31 @@ func main() {
 
 	log.Println(l.Addr())
 
-	db, err := bolt.Open("packet.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
+	// db, err := bolt.Open("packet.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer db.Close()
 
-	c := make(chan []byte, 100)
-	startWorker(8, func(c chan []byte) {
-		for b := range c {
-			//  保存包
-			if err := db.Update(func(tx *bolt.Tx) error {
-				bucket, err := tx.CreateBucketIfNotExists([]byte("Bucket"))
-				if err != nil {
-					return err
-				}
-				id, err := bucket.NextSequence()
-				if err != nil {
-					return err
-				}
-				return bucket.Put([]byte("key"+strconv.Itoa(int(id))), b)
-			}); err != nil {
-				log.Println(err)
-				continue
-			}
-		}
-	}, c)
+	// startWorker(8, func(c chan []byte) {
+	// 	for b := range c {
+	// 		//  保存包
+	// 		if err := db.Update(func(tx *bolt.Tx) error {
+	// 			bucket, err := tx.CreateBucketIfNotExists([]byte("Bucket"))
+	// 			if err != nil {
+	// 				return err
+	// 			}
+	// 			id, err := bucket.NextSequence()
+	// 			if err != nil {
+	// 				return err
+	// 			}
+	// 			return bucket.Put([]byte("key"+strconv.Itoa(int(id))), b)
+	// 		}); err != nil {
+	// 			log.Println(err)
+	// 			continue
+	// 		}
+	// 	}
+	// }, c)
 
 	for {
 		conn, err := l.Accept()
@@ -58,11 +54,11 @@ func main() {
 			continue
 		}
 
-		go handleConn(conn, c)
+		go handleConn(conn)
 	}
 }
 
-func handleConn(conn net.Conn, c chan []byte) {
+func handleConn(conn net.Conn) {
 	defer conn.Close()
 
 	// 建立与后端服务的连接
@@ -74,50 +70,50 @@ func handleConn(conn net.Conn, c chan []byte) {
 	defer serConn.Close()
 
 	// 绑定buf，当连接有数据时，保存一份副本到buf
-	var buf1, buf2 bytes.Buffer
-	w := io.MultiWriter(serConn, &buf1)
-	w2 := io.MultiWriter(conn, &buf2)
-	go func() {
-		for {
-			if buf1.Len() > 0 {
-				data := make([]byte, buf1.Cap())
-				_, err := buf1.Read(data)
-				if err != nil {
-					fmt.Println(err)
-					continue
-				}
-				buf1.Reset()
+	// var buf1, buf2 bytes.Buffer
+	// w := io.MultiWriter(serConn, &buf1)
+	// w2 := io.MultiWriter(conn, &buf2)
+	// go func() {
+	// 	for {
+	// 		if buf1.Len() > 0 {
+	// 			data := make([]byte, buf1.Cap())
+	// 			_, err := buf1.Read(data)
+	// 			if err != nil {
+	// 				fmt.Println(err)
+	// 				continue
+	// 			}
+	// 			buf1.Reset()
 
-				c <- data
-			}
-		}
-	}()
-	go func() {
-		for {
-			if buf2.Len() > 0 {
-				data := make([]byte, buf2.Cap())
-				_, err := buf2.Read(data)
-				if err != nil {
-					fmt.Println(err)
-					continue
-				}
-				buf2.Reset()
+	// 			// c <- data
+	// 		}
+	// 	}
+	// }()
+	// go func() {
+	// 	for {
+	// 		if buf2.Len() > 0 {
+	// 			data := make([]byte, buf2.Cap())
+	// 			_, err := buf2.Read(data)
+	// 			if err != nil {
+	// 				fmt.Println(err)
+	// 				continue
+	// 			}
+	// 			buf2.Reset()
 
-				c <- data
-			}
-		}
-	}()
+	// 			// c <- data
+	// 		}
+	// 	}
+	// }()
 
 	// 请求
 	go func() {
-		if _, err := io.Copy(w, conn); err != nil {
-			fmt.Println(err)
+		if _, err := io.Copy(serConn, conn); err != nil {
+			log.Println(err)
 		}
 	}()
 
 	// 返回
-	if _, err := io.Copy(w2, serConn); err != nil {
-		fmt.Println(err)
+	if _, err := io.Copy(conn, serConn); err != nil {
+		log.Println(err)
 	}
 }
 
