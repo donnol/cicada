@@ -134,7 +134,7 @@ func newMux() *http.ServeMux {
 			Must: true,
 			Kind: reflect.String,
 		},
-	}, "JSON"))
+	}, JSON))
 
 	mux.Handle("/Register", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
 
@@ -148,7 +148,7 @@ func newMux() *http.ServeMux {
 		"Password": paramOption{
 			Must: true,
 		},
-	}, "JSON"))
+	}, JSON))
 
 	mux.Handle("/Login", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
 
@@ -184,7 +184,7 @@ func newMux() *http.ServeMux {
 		"Password": paramOption{
 			Must: true,
 		},
-	}, "JSON"))
+	}, JSON))
 
 	mux.Handle("/Logout", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
 
@@ -193,7 +193,7 @@ func newMux() *http.ServeMux {
 		// 2 登出/重置密码后，在后端黑名单里记录cookie，以后每个cookie均检查是否在黑名单，直到该cookie过期
 
 		return
-	}, http.MethodPost, map[string]paramOption{}, "JSON"))
+	}, http.MethodPost, map[string]paramOption{}, JSON))
 
 	mux.Handle("/ExpenseList", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
 
@@ -217,14 +217,40 @@ func newMux() *http.ServeMux {
 			Kind:  reflect.Int,
 			IsPtr: true,
 		},
-	}, "JSON"))
+	}, JSON))
 
 	mux.Handle("/Upload", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
 		return
-	}, http.MethodPost, map[string]paramOption{}, "JSON"))
+	}, http.MethodPost, map[string]paramOption{}, JSON))
+
+	mux.Handle("/AddNote", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
+		id, err := model.AddNote(model.Note{
+			UserID: 1,
+			Detail: param["Detail"].(string),
+		})
+		if err != nil {
+			return
+		}
+		v = id
+
+		return
+	}, http.MethodPost, map[string]paramOption{
+		"Detail": paramOption{
+			Must: true,
+			Kind: reflect.String,
+		},
+	}, JSON))
 
 	return mux
 }
+
+// Format 格式
+type Format string
+
+const (
+	// JSON json 格式
+	JSON Format = "JSON"
+)
 
 type customHeader struct {
 	Key   string
@@ -245,7 +271,7 @@ func handlerWrapper(
 	),
 	method string,
 	paramOptionMap map[string]paramOption,
-	responseFormat string,
+	responseFormat Format,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 获取参数
@@ -265,6 +291,7 @@ func handlerWrapper(
 				return
 			}
 			values = r.PostForm
+			fmt.Printf("%+v\n", values)
 		default:
 			w.Write([]byte("暂不支持 Get,Post 外的方法"))
 			return
@@ -317,7 +344,7 @@ func handlerWrapper(
 
 		// 返回
 		switch responseFormat {
-		case "JSON":
+		case JSON:
 			r, err := json.Marshal(v)
 			if err != nil {
 				w.Write([]byte(err.Error()))
