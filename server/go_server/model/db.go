@@ -31,8 +31,9 @@ type CommonParam struct {
 	Order  string
 }
 
-func wrapTx(tx *sqlx.Tx, f func(tx *sqlx.Tx) error) error {
-	err := f(tx)
+// 如果 f 参数的类型是 func(tx *sqlx.Tx)，在执行时，需要将 tx 传入，f 函数里会不会有改变 tx 参数的可能呢？
+func wrapTx(tx *sqlx.Tx, f func() error) error {
+	err := f()
 	if err != nil {
 		tx.Rollback()
 		return err

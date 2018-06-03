@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"strconv"
 
-	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -22,7 +21,7 @@ type User struct {
 // PhoneRegisterCode 获取注册码
 func PhoneRegisterCode(phone string) (code string, err error) {
 	tx := _db.MustBegin()
-	err = wrapTx(tx, func(tx *sqlx.Tx) error {
+	err = wrapTx(tx, func() error {
 		// 是否已注册
 		var exist bool
 		err := tx.Get(&exist, `SELECT EXISTS(SELECT FROM t_user
