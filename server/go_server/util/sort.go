@@ -26,3 +26,14 @@ func partition(s []int, l, r int) int {
 	s[i+1], s[r] = s[r], s[i+1]
 	return i + 1
 }
+
+// BubbleSort 冒泡排序
+func BubbleSort(s []int) {
+	for i := 0; i < len(s); i++ {
+		for j := 0; j < len(s); j++ {
+			if s[i] < s[j] {
+				s[i], s[j] = s[j], s[i]
+			}
+		}
+	}
+}
