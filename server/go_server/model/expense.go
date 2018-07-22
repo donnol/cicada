@@ -46,7 +46,7 @@ func ExpenseList(ep ExpenseParam) (expenses []Expense, err error) {
 
 		OFFSET $2
 		`,
-		ep.Limit,
+		ep.Size,
 		ep.Offset,
 		ep.Order,
 		ep.ID,

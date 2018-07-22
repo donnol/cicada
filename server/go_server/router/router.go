@@ -194,7 +194,7 @@ func NewMux() http.Handler {
 		// }
 
 		ep := model.ExpenseParam{}
-		ep.Limit = 10
+		ep.Size = 10
 		err = util.MapToStruct(param, &ep)
 		if err != nil {
 			return
@@ -229,6 +229,27 @@ func NewMux() http.Handler {
 		"Detail": paramOption{
 			Must: true,
 			Kind: reflect.String,
+		},
+	}, JSON))
+
+	mux.Handle("/GetNoteList", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
+		v, err = model.GetNoteList(model.CommonParam{
+			Size:   param["Size"].(int),
+			Offset: param["Offset"].(int),
+		})
+		if err != nil {
+			return
+		}
+
+		return
+	}, http.MethodGet, map[string]paramOption{
+		"Size": paramOption{
+			Must: true,
+			Kind: reflect.Int,
+		},
+		"Offset": paramOption{
+			Must: true,
+			Kind: reflect.Int,
 		},
 	}, JSON))
 

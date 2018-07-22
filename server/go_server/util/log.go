@@ -27,7 +27,8 @@ var _ = func() error {
 
 	f, err := os.OpenFile(fullPath, os.O_APPEND|os.O_CREATE|os.O_RDWR, os.ModePerm)
 	if err != nil {
-		panic(err)
+		log.Println(err)
+		return err
 	}
 	log.SetOutput(f)
 

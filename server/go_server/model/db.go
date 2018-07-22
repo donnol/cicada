@@ -26,7 +26,7 @@ var _db *sqlx.DB = func() *sqlx.DB {
 
 // CommonParam 通用参数
 type CommonParam struct {
-	Limit  int
+	Size   int
 	Offset int
 	Order  string
 }
