@@ -17,12 +17,13 @@ import (
 )
 
 type paramOption struct {
-	Name   string       // 参数名
-	Must   bool         // 是否必须：true 则必须传入；false 时如果有传则用，没传则忽略
-	Kind   reflect.Kind // 参数类型
-	IsPtr  bool         // 参数类型是否指针
-	Range  []int        // 参数值范围，仅可用于整形参数。时间的话，先要转为时间戳
-	Regexp string       // 正则匹配
+	Name    string       // 参数名
+	Must    bool         // 是否必须：true 则必须传入；false 时如果有传则用，没传则忽略
+	Default interface{}  // 默认值，非必传参数使用
+	Kind    reflect.Kind // 参数类型
+	IsPtr   bool         // 参数类型是否指针
+	Range   []int        // 参数值范围，仅可用于整形参数。时间的话，先要转为时间戳
+	Regexp  string       // 正则匹配
 }
 
 // handleParam 处理参数
@@ -34,6 +35,10 @@ func handleParam(values url.Values, paramOptionMap map[string]paramOption, param
 		if len(vs) == 0 && po.Must {
 			err = errors.New("必须输入参数: " + k)
 			return
+		}
+		// 默认值
+		if po.Default != nil {
+			param[k] = po.Default
 		}
 		for _, v := range vs {
 			var actualValue interface{} = v
@@ -244,12 +249,12 @@ func NewMux() http.Handler {
 		return
 	}, http.MethodGet, map[string]paramOption{
 		"Size": paramOption{
-			Must: true,
-			Kind: reflect.Int,
+			Default: 10,
+			Kind:    reflect.Int,
 		},
 		"Offset": paramOption{
-			Must: true,
-			Kind: reflect.Int,
+			Default: 0,
+			Kind:    reflect.Int,
 		},
 	}, JSON))
 
@@ -286,6 +291,8 @@ func handlerWrapper(
 	responseFormat Format,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("request method %s, request url %s\n", r.Method, r.URL.String())
+
 		// 获取参数
 		var values url.Values
 		var param = make(map[string]interface{})
