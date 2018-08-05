@@ -23,6 +23,7 @@ type paramOption struct {
 	Kind    reflect.Kind // 参数类型
 	IsPtr   bool         // 参数类型是否指针
 	Range   []int        // 参数值范围，仅可用于整形参数。时间的话，先要转为时间戳
+	Enum    []int        // 参数值枚举，如1、3、5等
 	Regexp  string       // 正则匹配
 }
 
@@ -34,6 +35,7 @@ func handleParam(values url.Values, paramOptionMap map[string]paramOption, param
 		// 必须存在
 		if len(vs) == 0 && po.Must {
 			err = errors.New("必须输入参数: " + k)
+			fmt.Printf("err is %+v\n", err)
 			return
 		}
 		// 默认值
@@ -56,6 +58,21 @@ func handleParam(values url.Values, paramOptionMap map[string]paramOption, param
 					if iv < po.Range[0] ||
 						iv > po.Range[1] {
 						err = errors.New("参数值超出范围")
+						return
+					}
+				}
+				// 枚举检查
+				if len(po.Enum) > 0 {
+					var valid bool
+					for _, e := range po.Enum {
+						if e == iv { // 参数值必须在enum数组里
+							valid = true
+							break
+						}
+					}
+					if !valid {
+						err = errors.New("非法值")
+						fmt.Printf("invalid value %d, enum is %v\n", iv, po.Enum)
 						return
 					}
 				}
@@ -222,15 +239,22 @@ func NewMux() http.Handler {
 	mux.Handle("/AddNote", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
 		id, err := model.AddNote(model.Note{
 			UserID: 1,
+			Title:  param["Title"].(string),
 			Detail: param["Detail"].(string),
 		})
 		if err != nil {
 			return
 		}
-		v = id
+		v = map[string]interface{}{
+			"ID": id,
+		}
 
 		return
 	}, http.MethodPost, map[string]paramOption{
+		"Title": paramOption{
+			Must: true,
+			Kind: reflect.String,
+		},
 		"Detail": paramOption{
 			Must: true,
 			Kind: reflect.String,
@@ -255,6 +279,46 @@ func NewMux() http.Handler {
 		"Offset": paramOption{
 			Default: 0,
 			Kind:    reflect.Int,
+		},
+	}, JSON))
+
+	mux.Handle("/GetNote", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
+		v, err = model.GetNote(param["ID"].(int))
+		if err != nil {
+			return
+		}
+
+		return
+	}, http.MethodGet, map[string]paramOption{
+		"ID": paramOption{
+			Must: true,
+			Kind: reflect.Int,
+		},
+	}, JSON))
+
+	mux.Handle("/ModifyNote", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
+		err = model.ModifyNote(model.Note{
+			ID:     param["ID"].(int),
+			Title:  param["Title"].(string),
+			Detail: param["Detail"].(string),
+		})
+		if err != nil {
+			return
+		}
+
+		return
+	}, http.MethodPost, map[string]paramOption{
+		"ID": paramOption{
+			Must: true,
+			Kind: reflect.Int,
+		},
+		"Title": paramOption{
+			Must: true,
+			Kind: reflect.String,
+		},
+		"Detail": paramOption{
+			Must: true,
+			Kind: reflect.String,
 		},
 	}, JSON))
 

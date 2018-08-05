@@ -34,6 +34,7 @@ DROP TABLE IF EXISTS t_note;
 CREATE TABLE t_note(
     id bigserial not null PRIMARY KEY,
     user_id int not null,
+    title text not null default '',
     detail text not null,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT clock_timestamp()
 );

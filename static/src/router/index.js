@@ -3,6 +3,7 @@ import Router from 'vue-router'
 import Expense from '@/page/expense'
 import Note from '@/page/note'
 import Markdown from '@/page/markdown'
+import MarkdownList from '@/page/markdown_list'
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import mavonEditor from 'mavon-editor'
@@ -28,7 +29,18 @@ export default new Router({
     {
       path: '/markdown',
       name: 'Markdown',
-      component: Markdown
+      component: Markdown,
+      meta: {
+        title: '笔记-留住美好'
+      }
+    },
+    {
+      path: '/markdownList',
+      name: 'MarkdownList',
+      component: MarkdownList,
+      meta: {
+        title: '笔记列表-留住美好'
+      }
     }
   ]
 })
