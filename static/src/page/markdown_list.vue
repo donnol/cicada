@@ -2,6 +2,15 @@
     <div id="markdown_list" align="left">
         <!-- 笔记列表： -->
         <el-button @click="redirectNote()" type="text" size="small">添加</el-button>
+        <el-button @click="initData()" type="text" size="small">刷新</el-button>
+        <el-button @click="resetData()" type="text" size="small">重置</el-button>
+        <el-input placeholder="请输入内容" v-model="searchInput" class="input-with-select">
+          <el-select v-model="select" slot="prepend" placeholder="请选择">
+            <el-option label="编号" value="1"></el-option>
+            <el-option label="标题" value="2"></el-option>
+          </el-select>
+          <el-button @click="initData()" slot="append" icon="el-icon-search"></el-button>
+        </el-input>
         <el-table
             :data="data"
             border
@@ -61,14 +70,25 @@ export default {
         timeout: 1000
         //   headers: { 'X-Custom-Header': 'foobar' }
       })
+      var param = {}
+      var searchInput = this.searchInput
+      if (searchInput !== '') {
+        param = { params: { Title: searchInput } }
+      }
+      console.log(param)
       instance
-        .get('/GetNoteList', {})
+        .get('/GetNoteList', param)
         .then(response => {
           that.data = response.data.Data
         })
         .catch(error => {
           console.log(error)
         })
+    },
+    resetData() {
+      const that = this
+
+      that.searchInput = ''
     },
     redirectNote(row) {
       console.log(row)
@@ -94,7 +114,9 @@ export default {
   },
   data() {
     return {
-      data: []
+      data: [],
+      searchInput: '',
+      select: []
     }
   }
 }
@@ -107,5 +129,13 @@ export default {
 
 .el-table .success-row {
   background: #79b658;
+}
+
+.el-select {
+  width: 130px;
+}
+
+.input-with-select .el-input-group__prepend {
+  background-color: #fff;
 }
 </style>

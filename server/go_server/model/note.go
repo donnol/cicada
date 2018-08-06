@@ -48,7 +48,7 @@ func ModifyNote(note Note) (err error) {
 }
 
 // GetNoteList 获取笔记列表
-func GetNoteList(param CommonParam) (
+func GetNoteList(note Note, param CommonParam) (
 	res struct {
 		Data  []json.RawMessage
 		Total int
@@ -69,6 +69,12 @@ func GetNoteList(param CommonParam) (
 		COUNT(*) OVER () AS total
 		FROM t_note
 
+		WHERE true
+		
+		AND CASE WHEN $3 <> '' THEN
+			title ~* $3
+		ELSE true END
+
 		ORDER BY id DESC
 
 		LIMIT $1
@@ -76,6 +82,7 @@ func GetNoteList(param CommonParam) (
 		`,
 		param.Size,
 		param.Offset,
+		note.Title,
 	)
 	if err != nil {
 		return

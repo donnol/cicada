@@ -262,7 +262,11 @@ func NewMux() http.Handler {
 	}, JSON))
 
 	mux.Handle("/GetNoteList", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
-		v, err = model.GetNoteList(model.CommonParam{
+		note := model.Note{}
+		if title, ok := param["Title"]; ok {
+			note.Title = title.(string)
+		}
+		v, err = model.GetNoteList(note, model.CommonParam{
 			Size:   param["Size"].(int),
 			Offset: param["Offset"].(int),
 		})
@@ -272,6 +276,9 @@ func NewMux() http.Handler {
 
 		return
 	}, http.MethodGet, map[string]paramOption{
+		"Title": paramOption{
+			Kind: reflect.String,
+		},
 		"Size": paramOption{
 			Default: 10,
 			Kind:    reflect.Int,
