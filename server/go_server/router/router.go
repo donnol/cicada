@@ -263,6 +263,9 @@ func NewMux() http.Handler {
 
 	mux.Handle("/GetNoteList", handlerWrapper(func(userID int, param map[string]interface{}) (v interface{}, headers []customHeader, err error) {
 		note := model.Note{}
+		if id , ok := param["ID"]; ok {
+			note.ID = id.(int)
+		}
 		if title, ok := param["Title"]; ok {
 			note.Title = title.(string)
 		}
@@ -276,6 +279,9 @@ func NewMux() http.Handler {
 
 		return
 	}, http.MethodGet, map[string]paramOption{
+		"ID": paramOption{
+			Kind: reflect.Int,
+		},
 		"Title": paramOption{
 			Kind: reflect.String,
 		},

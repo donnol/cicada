@@ -75,6 +75,10 @@ func GetNoteList(note Note, param CommonParam) (
 			title ~* $3
 		ELSE true END
 
+		AND CASE WHEN $4 <> 0 THEN
+			id = $4
+		ELSE true END
+
 		ORDER BY id DESC
 
 		LIMIT $1
@@ -83,6 +87,7 @@ func GetNoteList(note Note, param CommonParam) (
 		param.Size,
 		param.Offset,
 		note.Title,
+		note.ID,
 	)
 	if err != nil {
 		return

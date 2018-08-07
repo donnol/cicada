@@ -45,6 +45,10 @@
               </template>
             </el-table-column>
         </el-table>
+        <el-button-group align="center">
+          <el-button @click="initData()" type="text" icon="el-icon-arrow-left">上一页</el-button>
+          <el-button @click="initData()" type="text">下一页<i class="el-icon-arrow-right el-icon--right"></i></el-button>
+        </el-button-group>
     </div>
 </template>
 
@@ -70,11 +74,21 @@ export default {
         timeout: 1000
         //   headers: { 'X-Custom-Header': 'foobar' }
       })
+      // TODO 分页
       var param = {}
       var searchInput = this.searchInput
       if (searchInput !== '') {
-        param = { params: { Title: searchInput } }
+        let values = {}
+        if (that.select === '1') {
+          values['ID'] = searchInput
+        } else if (that.select === '2') {
+          values['Title'] = searchInput
+        } else {
+          values['Title'] = searchInput
+        }
+        param = { params: values }
       }
+      console.log(that.select)
       console.log(param)
       instance
         .get('/GetNoteList', param)
