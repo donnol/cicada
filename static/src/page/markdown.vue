@@ -1,5 +1,6 @@
 <template>
     <div id="markdown" align="left">
+        <el-button @click="goback()" type="text" icon="el-icon-arrow-left">返回</el-button>
         <el-input
           type="textarea"
           autosize
@@ -85,6 +86,9 @@ export default {
         .catch(error => {
           console.log(error)
         })
+    },
+    goback() {
+      this.$router.go(-1)
     }
   },
   created() {
