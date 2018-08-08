@@ -46,14 +46,20 @@
             </el-table-column>
         </el-table>
         <el-button-group align="center">
-          <el-button @click="initData()" type="text" icon="el-icon-arrow-left">上一页</el-button>
-          <el-button @click="initData()" type="text">下一页<i class="el-icon-arrow-right el-icon--right"></i></el-button>
+          <el-button @click="nextPage(-1)" type="text" icon="el-icon-arrow-left">上一页</el-button>
+          <el-button @click="nextPage(1)" type="text">下一页<i class="el-icon-arrow-right el-icon--right"></i></el-button>
         </el-button-group>
     </div>
 </template>
 
 <script>
 import axios from 'axios'
+
+var instance = axios.create({
+  baseURL: 'http://localhost:8520',
+  timeout: 1000
+  //   headers: { 'X-Custom-Header': 'foobar' }
+})
 
 export default {
   name: 'MarkdownList',
@@ -69,16 +75,10 @@ export default {
     initData() {
       const that = this // 没有这句，下面给 data 赋值会失败
 
-      var instance = axios.create({
-        baseURL: 'http://localhost:8520',
-        timeout: 1000
-        //   headers: { 'X-Custom-Header': 'foobar' }
-      })
-      // TODO 分页
       var param = {}
       var searchInput = this.searchInput
+      let values = { Size: this.size, Offset: this.offset }
       if (searchInput !== '') {
-        let values = {}
         if (that.select === '1') {
           values['ID'] = searchInput
         } else if (that.select === '2') {
@@ -86,18 +86,33 @@ export default {
         } else {
           values['Title'] = searchInput
         }
-        param = { params: values }
       }
+      param = { params: values }
       console.log(that.select)
       console.log(param)
       instance
         .get('/GetNoteList', param)
         .then(response => {
           that.data = response.data.Data
+          that.total = response.data.Total
         })
         .catch(error => {
           console.log(error)
         })
+    },
+    nextPage(direction) {
+      if (direction === -1) {
+        if (this.offset < this.size) {
+          return
+        }
+        this.offset -= this.size
+      } else if (direction === 1) {
+        if (this.offset + this.size >= this.total) {
+          return
+        }
+        this.offset += this.size
+      }
+      this.initData()
     },
     resetData() {
       const that = this
@@ -129,8 +144,11 @@ export default {
   data() {
     return {
       data: [],
+      total: 0,
       searchInput: '',
-      select: []
+      select: [],
+      size: 10,
+      offset: 0
     }
   }
 }
