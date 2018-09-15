@@ -3,3 +3,5 @@ server/go_server/go_server
 server/go_server/log/*
 server/js_server/node_modules/*
 server/gateway/vendor/*
+server/rust_server/src/main
+server/rust_server/target
