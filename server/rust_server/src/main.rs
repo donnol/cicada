@@ -57,6 +57,13 @@ fn main() {
         let a = array_slice(&a[..a.len()-1]);
         println!("{:?}", a)
     }
+
+    // 8
+    {
+        let user = User::make(String::from("jd")); // 调用关联函数使用'::'
+        // println!("{}", user.print()); // no method named `print` found for type `User` in the current scope
+        println!("{}", user.string()) // 调用方法使用'.'
+    }
 }
 
 fn takes_ownership(str: String) {
@@ -91,4 +98,22 @@ fn first_word(s: &str) -> &str {
 
 fn array_slice(a: &[i32]) -> &[i32] {
     a
+}
+
+struct User {
+    name:String,
+}
+
+impl User {
+    // 关联函数
+    fn make(name: String) -> User {
+        User{
+            name,
+        }
+    }
+
+    // 方法
+    fn string(self) -> String {
+        String::from("user's name is ")+&self.name[..]
+    }
 }
