@@ -64,6 +64,19 @@ fn main() {
         // println!("{}", user.print()); // no method named `print` found for type `User` in the current scope
         println!("{}", user.string()) // 调用方法使用'.'
     }
+
+    // 9
+    {
+        let home = Home{
+            ip: IpAddrKind::V4,
+            name: String::from("my home"),
+        };
+        let loopback = Home{
+            ip: IpAddrKind::V6,
+            name: String::from("loopback"),
+        };
+        println!("{:?}, {:?}", home, loopback)
+    }
 }
 
 fn takes_ownership(str: String) {
@@ -116,4 +129,16 @@ impl User {
     fn string(self) -> String {
         String::from("user's name is ")+&self.name[..]
     }
+}
+
+#[derive(Debug)]
+enum IpAddrKind {
+    V4,
+    V6,
+}
+
+#[derive(Debug)]
+struct Home {
+    ip: IpAddrKind,
+    name: String,
 }
